@@ -1,0 +1,66 @@
+#==============================================================================
+# Requirements
+# * Docker installed
+# * docker-compose installed
+#----------------------------------------------------------------------
+# Use
+# UID=${UID} GID=${GID} docker-compose -f docker-compose-dev.yml up -d
+#----------------------------------------------------------------------
+version: '3.8'
+#----------------------------------------------------------------------
+# Networks
+#----------------------------------------------------------------------
+networks:
+  hackathon-video-processor-api-net:
+    driver: bridge
+#----------------------------------------------------------------------
+# Volumes
+#----------------------------------------------------------------------
+volumes:
+  hackathon-video-processor-api-db-data: {}
+#----------------------------------------------------------------------
+# Services:
+#----------------------------------------------------------------------
+services:
+  hackathon-video-processor-api:
+    image: node:16-bullseye
+    container_name: hackathon-video-processor-api
+    working_dir: /usr/src/app
+    command: /usr/src/app/docker/docker-run-dev.sh
+    user: '${DUID}:${DGID}'
+    volumes:
+      - '..:/usr/src/app:Z'
+    ports:
+      - '3000:3000'
+    networks:
+      - hackathon-video-processor-api-net
+    env_file:
+      - ./dev-local.env
+    depends_on:
+      - hackathon-video-processor-api-db
+  hackathon-video-processor-api-db:
+    image: postgres:latest
+    container_name: hackathon-video-processor-api-db
+    ports:
+      - 5432:5432
+    networks:
+      - hackathon-video-processor-api-net
+    env_file:
+      - ./dev-local.env
+    volumes:
+      - hackathon-video-processor-api-db-data:/var/lib/postgresql/data
+  localstack:
+    image: 'localstack/localstack:latest'
+    container_name: localstack
+    ports:
+      - '4566:4566'
+    volumes:
+      - '${LOCALSTACK_VOLUME_DIR:-/var/lib/localstack}:/var/lib/localstack'
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - ./localstack/sqs:/etc/localstack/init/ready.d
+    environment:
+      - AWS_DEFAULT_REGION=us-east-1
+      - EDGE_PORT=4566
+      - SERVICES=sns,sqs,dynamodb,s3
+    networks:
+      - hackathon-video-processor-api-net

@@ -1,0 +1,90 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Tech Challenge Payments Service",
+    "version": "1.0.0",
+    "description": "API documentation for the Payments Service."
+  },
+  "servers": [
+    {
+      "url": "https://evff0dxwnk.execute-api.us-east-1.amazonaws.com/apis/orders/",
+      "description": "Production server"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Local server"
+    }
+  ],
+  "paths": {
+    "/metrics": {
+      "get": {
+        "summary": "Retrieve service metrics",
+        "responses": {
+          "200": {
+            "description": "Service metrics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payment": {
+      "get": {
+        "summary": "Retrieve payment information",
+        "responses": {
+          "200": {
+            "description": "Payment information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/private/payment": {
+      "post": {
+        "summary": "Create a new payment",
+        "parameters": [
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "API key for authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "orderId": { "type": "string" },
+                  "price": { "type": "number" }
+                },
+                "required": ["orderId", "price"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Payment created successfully."
+          }
+        }
+      }
+    }
+  }
+}

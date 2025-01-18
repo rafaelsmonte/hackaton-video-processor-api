@@ -1,0 +1,51 @@
+#==============================================================================
+# Requirements
+# * Docker installed
+# * docker-compose installed
+#----------------------------------------------------------------------
+# Use
+# UID=${UID} GID=${GID} docker-compose -f docker-compose-dev.yml up -d
+#----------------------------------------------------------------------
+version: '3.8'
+#----------------------------------------------------------------------
+# Networks
+#----------------------------------------------------------------------
+networks:
+  hackathon-video-processor-api-net-test:
+    driver: bridge
+#----------------------------------------------------------------------
+# Volumes
+#----------------------------------------------------------------------
+volumes:
+  hackathon-video-processor-api-db-data-test: {}
+#----------------------------------------------------------------------
+# Services:
+#----------------------------------------------------------------------
+services:
+  hackathon-video-processor-api-test:
+    image: node:16-bullseye
+    container_name: hackathon-video-processor-api-test
+    working_dir: /usr/src/app
+    command: /usr/src/app/docker/docker-run-test.sh
+    user: '${DUID}:${DGID}'
+    volumes:
+      - '..:/usr/src/app:Z'
+    ports:
+      - '3000:3000'
+    networks:
+      - hackathon-video-processor-api-net-test
+    env_file:
+      - ./test-local.env
+    depends_on:
+      - hackathon-video-processor-api-db-test
+  hackathon-video-processor-api-db-test:
+    image: postgres:latest
+    container_name: hackathon-video-processor-api-db-test
+    ports:
+      - 5433:5432
+    networks:
+      - hackathon-video-processor-api-net-test
+    env_file:
+      - ./test-local.env
+    volumes:
+      - hackathon-video-processor-api-db-data-test:/var/lib/postgresql/data
