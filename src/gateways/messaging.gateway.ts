@@ -26,8 +26,9 @@ export class MessagingGateway implements IMessagingGateway {
   }
 
   async publishVideoImageExtractionSuccessMessage(
-    userId: number,
+    userId: string,
     videoUrl: string,
+    videoDescription: string,
     videoSnapshotsUrl: string,
   ): Promise<void> {
     const message: VideoMessage = {
@@ -37,6 +38,7 @@ export class MessagingGateway implements IMessagingGateway {
       payload: {
         userId,
         videoUrl,
+        videoDescription,
         videoSnapshotsUrl,
       },
     };
@@ -45,8 +47,9 @@ export class MessagingGateway implements IMessagingGateway {
   }
 
   async publishVideoImageExtractionErrorMessage(
-    userId: number,
+    userId: string,
     videoUrl: string,
+    videoDescription: string,
     errorMessage: string,
     errorDescription: string,
   ): Promise<void> {
@@ -57,6 +60,7 @@ export class MessagingGateway implements IMessagingGateway {
       payload: {
         userId,
         videoUrl,
+        videoDescription,
         errorMessage,
         errorDescription,
       },

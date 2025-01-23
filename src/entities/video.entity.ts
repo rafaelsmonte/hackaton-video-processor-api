@@ -4,7 +4,7 @@ export class Video {
   private id: string;
   private createdAt: Date;
   private updatedAt: Date;
-  private userId: number;
+  private userId: string;
   private description: string;
   private url: string;
   private snapshotsUrl: string;
@@ -14,7 +14,7 @@ export class Video {
     id: string,
     createdAt: Date,
     updateAt: Date,
-    userId: number,
+    userId: string,
     description: string,
     url: string,
     snapshotsUrl: string,
@@ -31,7 +31,7 @@ export class Video {
   }
 
   static new(
-    userId: number,
+    userId: string,
     description: string,
     url: string,
     status: VideoImageExtractionStatus,
@@ -53,7 +53,7 @@ export class Video {
     return this.updatedAt;
   }
 
-  public getUserId(): number {
+  public getUserId(): string {
     return this.userId;
   }
 
@@ -86,7 +86,7 @@ export class Video {
     this.updatedAt = updatedAt;
   }
 
-  public setUserId(userId: number): void {
+  public setUserId(userId: string): void {
     this.userId = userId;
   }
 

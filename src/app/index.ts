@@ -177,7 +177,13 @@ export class VideoApp {
         }
 
         const { description } = request.body;
-        const userId = 0; // TODO replace with cognito user id
+        const userId = request.headers['x-user-id'] as string;
+
+        if (!userId) {
+          return response
+            .status(400)
+            .json({ error: 'User ID is required in the x-user-id header' });
+        }
 
         await VideoController.create(
           this.database,

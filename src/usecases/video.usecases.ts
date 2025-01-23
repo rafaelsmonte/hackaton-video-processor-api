@@ -29,7 +29,7 @@ export class VideoUseCases {
     fileName: string,
     fileBuffer: Buffer,
     fileMimetype: string,
-    userId: number,
+    userId: string,
     description: string,
   ): Promise<Video> {
     const bucketName = process.env.AWS_S3_BUCKET;
@@ -89,6 +89,7 @@ export class VideoUseCases {
     messagingGateway.publishVideoImageExtractionSuccessMessage(
       video.getUserId(),
       video.getUrl(),
+      video.getDescription(),
       videoSnapshotsUrl,
     );
 
@@ -111,6 +112,7 @@ export class VideoUseCases {
     messagingGateway.publishVideoImageExtractionErrorMessage(
       video.getUserId(),
       video.getUrl(),
+      video.getDescription(),
       errorMessage,
       errorDescription,
     );

@@ -5,14 +5,16 @@ export interface IMessagingGateway {
   ): Promise<void>;
 
   publishVideoImageExtractionSuccessMessage(
-    userId: number,
+    userId: string,
     videoUrl: string,
+    videoDescription: string,
     videoSnapshotsUrl: string,
   ): Promise<void>;
 
   publishVideoImageExtractionErrorMessage(
-    userId: number,
+    userId: string,
     videoUrl: string,
+    videoDescription: string,
     errorMessage: string,
     errorDescription: string,
   ): Promise<void>;

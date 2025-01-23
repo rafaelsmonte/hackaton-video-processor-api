@@ -31,7 +31,7 @@ export class VideoController {
     fileName: string,
     fileBuffer: Buffer,
     fileMimetype: string,
-    userId: number,
+    userId: string,
     description: string,
   ): Promise<string> {
     const videoGateway = new VideoGateway(database);
