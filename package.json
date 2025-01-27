@@ -36,6 +36,7 @@
     "@types/multer": "^1.4.12",
     "add": "^2.0.6",
     "aws-sdk": "^2.1692.0",
+    "aws-sdk-client-mock": "^4.1.0",
     "axios": "^1.7.7",
     "body-parser": "^1.20.2",
     "copyfiles": "^2.4.1",
