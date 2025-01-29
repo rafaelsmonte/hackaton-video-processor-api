@@ -189,6 +189,57 @@ describe('DynamoDatabase', () => {
     });
   });
 
+  describe('updateVideoStatusAndSnapshotsUrl', () => {
+    it('should update the video status, snapshots url and return the updated video', async () => {
+      dynamoMock.on(UpdateCommand).resolves({});
+
+      dynamoMock.on(GetCommand).resolves({
+        Item: {
+          id: 'videoId-1',
+          createdAt: '2025-01-01T00:00:00Z',
+          updatedAt: '2025-01-01T01:00:00Z',
+          userId: 'userId-1',
+          description: 'video description',
+          url: 'video url',
+          snapshotsUrl: 'video snapshots url',
+          status: VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PENDING,
+        },
+      });
+
+      const video = {
+        getId: () => 'videoId-1',
+        getStatus: () =>
+          VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PENDING,
+        getSnapshotsUrl: () => 'video snapshots url',
+      };
+
+      const updatedVideo = await database.updateVideoStatusAndSnapshotsUrl(
+        video as any,
+      );
+
+      expect(updatedVideo).not.toBeNull();
+      expect(updatedVideo.getStatus()).toBe(
+        VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PENDING,
+      );
+      expect(updatedVideo.getSnapshotsUrl()).toBe('video snapshots url');
+    });
+
+    it('should throw a DatabaseError on failure', async () => {
+      dynamoMock.on(UpdateCommand).rejects(new Error('DynamoDB error'));
+
+      const video = {
+        getId: () => 'videoId-1',
+        getStatus: () =>
+          VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PENDING,
+        getSnapshotsUrl: () => 'video snapshots url',
+      };
+
+      await expect(
+        database.updateVideoStatusAndSnapshotsUrl(video as any),
+      ).rejects.toThrow(DatabaseError);
+    });
+  });
+
   describe('deleteVideo', () => {
     it('should delete an video by ID', async () => {
       dynamoMock.on(DeleteCommand).resolves({});

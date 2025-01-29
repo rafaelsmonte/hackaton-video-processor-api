@@ -11,18 +11,10 @@ export class S3Storage implements IExternalStorage {
         endpoint: 'http://localstack:4566',
         region: process.env.AWS_REGION,
         forcePathStyle: true, // required for LocalStack
-        credentials: {
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-        },
       });
     } else {
       this.s3Client = new S3Client({
         region: process.env.AWS_REGION,
-        credentials: {
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-        },
       });
     }
   }

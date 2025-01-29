@@ -1,4 +1,4 @@
-import { IExternalStorage } from 'src/interfaces/external-storage.interface';
+import { IExternalStorage } from '../interfaces/external-storage.interface';
 import { IExternalStorageGateway } from '../interfaces/external-storage.gateway.interface';
 import { Readable } from 'stream';
 

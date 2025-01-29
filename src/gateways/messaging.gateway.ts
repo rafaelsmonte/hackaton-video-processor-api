@@ -3,7 +3,7 @@ import { IMessaging } from '../interfaces/messaging.interface';
 import { MessageType } from '../enum/message-type.enum';
 import { MessageSender } from '../enum/message-sender.enum';
 import { MessageTarget } from '../enum/message-target.enum';
-import { VideoMessage } from 'src/types/video-message.type';
+import { VideoMessage } from '../types/video-message.type';
 
 export class MessagingGateway implements IMessagingGateway {
   constructor(private messaging: IMessaging) {}

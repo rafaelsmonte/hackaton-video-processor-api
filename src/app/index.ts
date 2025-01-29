@@ -6,12 +6,12 @@ import { IDatabase } from '../interfaces/database.interface';
 import { IMessaging } from '../interfaces/messaging.interface';
 import { InvalidVideoImageExtractionStatusError } from '../errors/invalid-video-image-extraction-status.error';
 import { DatabaseError } from '../errors/database.error';
-import { IExternalStorage } from 'src/interfaces/external-storage.interface';
+import { IExternalStorage } from '../interfaces/external-storage.interface';
 import { SQS } from 'aws-sdk';
-import { VideoMessage } from 'src/types/video-message.type';
-import { MessageSender } from 'src/enum/message-sender.enum';
-import { MessageTarget } from 'src/enum/message-target.enum';
-import { MessageType } from 'src/enum/message-type.enum';
+import { VideoMessage } from '../types/video-message.type';
+import { MessageSender } from '../enum/message-sender.enum';
+import { MessageTarget } from '../enum/message-target.enum';
+import { MessageType } from '../enum/message-type.enum';
 
 export class VideoApp {
   constructor(

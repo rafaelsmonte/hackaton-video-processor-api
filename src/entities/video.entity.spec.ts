@@ -1,4 +1,4 @@
-import { VideoImageExtractionStatus } from 'src/enum/video-image-extraction-status';
+import { VideoImageExtractionStatus } from '../enum/video-image-extraction-status';
 import { Video } from './video.entity';
 
 describe('Video', () => {
