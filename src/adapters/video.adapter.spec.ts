@@ -35,6 +35,11 @@ describe('VideoAdapter', () => {
 
       expect(removeTimestamp(result)).toEqual(removeTimestamp(expected));
     });
+
+    it('should return an empty array JSON string when given an empty array', () => {
+      const result = VideoAdapter.adaptArrayJson([]);
+      expect(result).toBe(JSON.stringify([]));
+    });
   });
 
   describe('adaptJson', () => {
@@ -53,6 +58,11 @@ describe('VideoAdapter', () => {
       });
 
       expect(removeTimestamp(result)).toEqual(removeTimestamp(expected));
+    });
+
+    it('should return an empty object JSON string when given null', () => {
+      const result = VideoAdapter.adaptJson(null);
+      expect(result).toBe(JSON.stringify({}));
     });
   });
 });

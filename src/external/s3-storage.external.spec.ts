@@ -1,4 +1,4 @@
-import { S3Client } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { S3Storage } from './s3-storage.external';
 
 jest.mock('@aws-sdk/client-s3', () => {
@@ -8,13 +8,21 @@ jest.mock('@aws-sdk/client-s3', () => {
         send: jest.fn(),
       };
     }),
+    PutObjectCommand: jest.fn(),
   };
 });
 
 describe('S3Storage', () => {
+  let sendMock: jest.Mock;
+
   beforeEach(() => {
     jest.clearAllMocks();
     process.env.AWS_REGION = 'us-east-1';
+
+    sendMock = jest.fn();
+    (S3Client as jest.Mock).mockImplementation(() => ({
+      send: sendMock,
+    }));
   });
 
   it('should configure S3 client with localstack in DEVELOPMENT environment', () => {
@@ -44,6 +52,47 @@ describe('S3Storage', () => {
 
     expect(S3Client).toHaveBeenCalledWith({
       region: 'us-east-1',
+    });
+  });
+
+  describe('uploadVideo', () => {
+    const bucketName = 'test-bucket';
+    const key = 'test-video.mp4';
+    const body = Buffer.from('test data');
+    const contentType = 'video/mp4';
+
+    it('should upload a video successfully and return the correct URL (DEVELOPMENT)', async () => {
+      process.env.ENVIRONMENT = 'DEVELOPMENT';
+      const externalStorage = new S3Storage();
+
+      sendMock.mockResolvedValue({});
+
+      const result = await externalStorage.uploadVideo(
+        bucketName,
+        key,
+        body,
+        contentType,
+      );
+      expect(sendMock).toHaveBeenCalledWith(expect.any(PutObjectCommand));
+      expect(result).toBe(`http://localstack:4566/${bucketName}/${key}`);
+    });
+
+    it('should upload a video successfully and return the correct URL (PRODUCTION)', async () => {
+      process.env.ENVIRONMENT = 'PRODUCTION';
+      const externalStorage = new S3Storage();
+
+      sendMock.mockResolvedValue({});
+
+      const result = await externalStorage.uploadVideo(
+        bucketName,
+        key,
+        body,
+        contentType,
+      );
+      expect(sendMock).toHaveBeenCalledWith(expect.any(PutObjectCommand));
+      expect(result).toBe(
+        `https://${bucketName}.s3.us-east-1.amazonaws.com/${key}`,
+      );
     });
   });
 });
