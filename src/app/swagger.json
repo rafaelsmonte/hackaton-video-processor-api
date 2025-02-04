@@ -1,13 +1,13 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "Tech Challenge Payments Service",
+    "title": "Video Service API",
     "version": "1.0.0",
-    "description": "API documentation for the Payments Service."
+    "description": "API documentation for the Video Service."
   },
   "servers": [
     {
-      "url": "https://evff0dxwnk.execute-api.us-east-1.amazonaws.com/apis/orders/",
+      "url": "https://your-production-url.com",
       "description": "Production server"
     },
     {
@@ -16,72 +16,129 @@
     }
   ],
   "paths": {
-    "/metrics": {
+    "/video": {
       "get": {
-        "summary": "Retrieve service metrics",
+        "summary": "Retrieve all videos",
         "responses": {
           "200": {
-            "description": "Service metrics",
+            "description": "List of videos",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Video"
+                  }
                 }
               }
             }
           }
         }
-      }
-    },
-    "/payment": {
-      "get": {
-        "summary": "Retrieve payment information",
-        "responses": {
-          "200": {
-            "description": "Payment information",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/private/payment": {
+      },
       "post": {
-        "summary": "Create a new payment",
+        "summary": "Upload a new video",
         "parameters": [
           {
-            "name": "X-API-Key",
+            "name": "x-user-id",
             "in": "header",
             "required": true,
             "schema": {
               "type": "string"
             },
-            "description": "API key for authentication."
+            "description": "User ID associated with the video upload."
           }
         ],
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "orderId": { "type": "string" },
-                  "price": { "type": "number" }
-                },
-                "required": ["orderId", "price"]
+                  "video": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Video file to upload."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Description of the video."
+                  }
+                }
               }
             }
           }
         },
         "responses": {
-          "201": {
-            "description": "Payment created successfully."
+          "200": {
+            "description": "Video uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Video"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (missing file or user ID)"
+          }
+        }
+      }
+    },
+    "/video/{id}": {
+      "get": {
+        "summary": "Retrieve a specific video by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the video to retrieve."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Video details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Video"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Video not found"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Video": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "userId": { "type": "string" },
+          "description": { "type": "string" },
+          "url": { "type": "string", "format": "uri" },
+          "snapshotsUrl": { "type": "string", "format": "uri" },
+          "status": {
+            "type": "string",
+            "enum": [
+              "VIDEO_IMAGE_EXTRACTION_REQUESTED",
+              "VIDEO_IMAGE_EXTRACTION_PENDING",
+              "VIDEO_IMAGE_EXTRACTION_PROCESSING",
+              "VIDEO_IMAGE_EXTRACTION_SUCCESS",
+              "VIDEO_IMAGE_EXTRACTION_ERROR"
+            ]
           }
         }
       }

@@ -141,7 +141,7 @@ export class VideoApp {
     app.use('/docs', swaggerUi.serve, swaggerUi.setup(options));
 
     // Video endpoints
-    app.get('/video', async (request: Request, response: Response) => {
+    app.get('/api/v1/videos', async (request: Request, response: Response) => {
       await VideoController.findAll(this.database)
         .then((videos) => {
           response
@@ -152,20 +152,23 @@ export class VideoApp {
         .catch((error) => this.handleError(error, response));
     });
 
-    app.get('/video/:id', async (request: Request, response: Response) => {
-      const id = String(request.params.id);
-      await VideoController.findById(this.database, id)
-        .then((video) => {
-          response
-            .setHeader('Content-type', 'application/json')
-            .status(200)
-            .send(video);
-        })
-        .catch((error) => this.handleError(error, response));
-    });
+    app.get(
+      '/api/v1/videos/:id',
+      async (request: Request, response: Response) => {
+        const id = String(request.params.id);
+        await VideoController.findById(this.database, id)
+          .then((video) => {
+            response
+              .setHeader('Content-type', 'application/json')
+              .status(200)
+              .send(video);
+          })
+          .catch((error) => this.handleError(error, response));
+      },
+    );
 
     app.post(
-      '/video',
+      '/api/v1/videos',
       upload.single('video'),
       async (request: Request, response: Response) => {
         const file = request.file;
