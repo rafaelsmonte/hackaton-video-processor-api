@@ -9,12 +9,12 @@ export class S3Storage implements IExternalStorage {
     if (process.env.ENVIRONMENT === 'DEVELOPMENT') {
       this.s3Client = new S3Client({
         endpoint: 'http://localstack:4566',
-        region: process.env.AWS_REGION,
+        region: process.env.AWS_S3_REGION,
         forcePathStyle: true, // required for LocalStack
       });
     } else {
       this.s3Client = new S3Client({
-        region: process.env.AWS_REGION,
+        region: process.env.AWS_S3_REGION,
       });
     }
   }
