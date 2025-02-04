@@ -39,7 +39,7 @@ export class S3Storage implements IExternalStorage {
       const bucketEndpoint =
         process.env.ENVIRONMENT === 'DEVELOPMENT'
           ? `http://localstack:4566/${bucketName}/${key}` // LocalStack URL format
-          : `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+          : `https://${bucketName}.s3.${process.env.AWS_S3_REGION}.amazonaws.com/${key}`;
 
       return bucketEndpoint;
     } catch (error) {

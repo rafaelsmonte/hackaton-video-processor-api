@@ -64,6 +64,7 @@ export class DynamoDatabase implements IDatabase {
 
       return videos;
     } catch (error) {
+      console.log('Failed to find all videos due to: ', error);
       throw new DatabaseError('Failed to find all videos');
     }
   }
@@ -91,6 +92,7 @@ export class DynamoDatabase implements IDatabase {
         video.status,
       );
     } catch (error) {
+      console.log('Failed to find a video due to: ', error);
       throw new DatabaseError('Failed to find a video');
     }
   }
@@ -118,6 +120,7 @@ export class DynamoDatabase implements IDatabase {
 
       return this.findVideoById(videoId);
     } catch (error) {
+      console.log('Failed to create a video due to: ', error);
       throw new DatabaseError('Failed to create a video');
     }
   }
@@ -144,6 +147,7 @@ export class DynamoDatabase implements IDatabase {
 
       return this.findVideoById(video.getId());
     } catch (error) {
+      console.log('Failed to update video status due to: ', error);
       throw new DatabaseError('Failed to update video status');
     }
   }
@@ -174,7 +178,13 @@ export class DynamoDatabase implements IDatabase {
 
       return this.findVideoById(video.getId());
     } catch (error) {
-      throw new DatabaseError('Failed to update video status');
+      console.log(
+        'Failed to update video status and snapshots url due to: ',
+        error,
+      );
+      throw new DatabaseError(
+        'Failed to update video status and snapshots url',
+      );
     }
   }
 
@@ -189,6 +199,7 @@ export class DynamoDatabase implements IDatabase {
 
       await this.dynamoDBDocClient.send(new DeleteCommand(params));
     } catch (error) {
+      console.log('Failed to delete a video: ', error);
       throw new DatabaseError('Failed to delete a video');
     }
   }

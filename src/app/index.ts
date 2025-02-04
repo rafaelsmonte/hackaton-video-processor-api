@@ -12,6 +12,7 @@ import { VideoMessage } from '../types/video-message.type';
 import { MessageSender } from '../enum/message-sender.enum';
 import { MessageTarget } from '../enum/message-target.enum';
 import { MessageType } from '../enum/message-type.enum';
+import { validateUserId } from './validateUserId.middleware';
 
 export class VideoApp {
   constructor(
@@ -141,31 +142,40 @@ export class VideoApp {
     app.use('/docs', swaggerUi.serve, swaggerUi.setup(options));
 
     // Video endpoints
-    app.get('/videos', async (request: Request, response: Response) => {
-      await VideoController.findAll(this.database)
-        .then((videos) => {
-          response
-            .setHeader('Content-type', 'application/json')
-            .status(200)
-            .send(videos);
-        })
-        .catch((error) => this.handleError(error, response));
-    });
+    app.get(
+      '/videos',
+      validateUserId,
+      async (request: Request, response: Response) => {
+        await VideoController.findAll(this.database)
+          .then((videos) => {
+            response
+              .setHeader('Content-type', 'application/json')
+              .status(200)
+              .send(videos);
+          })
+          .catch((error) => this.handleError(error, response));
+      },
+    );
 
-    app.get('/videos/:id', async (request: Request, response: Response) => {
-      const id = String(request.params.id);
-      await VideoController.findById(this.database, id)
-        .then((video) => {
-          response
-            .setHeader('Content-type', 'application/json')
-            .status(200)
-            .send(video);
-        })
-        .catch((error) => this.handleError(error, response));
-    });
+    app.get(
+      '/videos/:id',
+      validateUserId,
+      async (request: Request, response: Response) => {
+        const id = String(request.params.id);
+        await VideoController.findById(this.database, id)
+          .then((video) => {
+            response
+              .setHeader('Content-type', 'application/json')
+              .status(200)
+              .send(video);
+          })
+          .catch((error) => this.handleError(error, response));
+      },
+    );
 
     app.post(
       '/videos',
+      validateUserId,
       upload.single('video'),
       async (request: Request, response: Response) => {
         const file = request.file;
@@ -177,13 +187,7 @@ export class VideoApp {
         }
 
         const { description } = request.body;
-        const userId = request.headers['x-user-id'] as string;
-
-        if (!userId) {
-          return response
-            .status(400)
-            .json({ error: 'User ID is required in the x-user-id header' });
-        }
+        const userId = (request as any).userId;
 
         await VideoController.create(
           this.database,
