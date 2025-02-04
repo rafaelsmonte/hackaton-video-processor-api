@@ -20,7 +20,6 @@ export class SNSMessaging implements IMessaging {
     const snsMessage: SNS.PublishInput = {
       TopicArn: process.env.VIDEO_API_SNS_TOPIC_ARN,
       Message: JSON.stringify(message),
-      MessageGroupId: message.type,
     };
 
     try {
