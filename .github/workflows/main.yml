@@ -1,0 +1,50 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  #sonar:
+  #  name: Sonar
+  #  continue-on-error: true #remover
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #    - uses: actions/checkout@v3
+  #      with:
+  #        fetch-depth: 0 
+  #    - uses: sonarsource/sonarqube-scan-action@master
+  #      env:
+  #        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  #        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+  build-and-push:
+    #needs: sonar
+    name: Build Image
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_ECR_REGION }}
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+      with:
+        mask-password: true
+    - name: Build, tag, and push image to Amazon ECR
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY:  hackaton/video_processor_api
+        LATEST_TAG: latest
+      run: |
+        export BUILD_VERSION_TAG=$(date +%Y-%m-%d-%I_%M_%S_utc)
+        docker build -f docker/Dockerfile -t "service-$BUILD_VERSION_TAG" .
+        docker tag "service-$BUILD_VERSION_TAG:latest" "$ECR_REGISTRY/$ECR_REPOSITORY:$BUILD_VERSION_TAG" && docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$BUILD_VERSION_TAG"
+        docker tag "service-$BUILD_VERSION_TAG:latest" "$ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG" && docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG"
+    
+    
+  
