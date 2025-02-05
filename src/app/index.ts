@@ -100,8 +100,8 @@ export class VideoApp {
                   ReceiptHandle: rawMessage.ReceiptHandle,
                 })
                 .promise();
-            } catch (err) {
-              console.error(`Error processing message: ${err}`);
+            } catch (error) {
+              console.error('Error processing message: ', error);
             }
           }
         }
