@@ -27,7 +27,7 @@ create_sns_topic() {
   
   # CREATE SNS TOPIC
   # https://docs.aws.amazon.com/cli/latest/reference/sns/create-topic.html
-  SNS_TOPIC_ARN=$(awslocal sns create-topic --endpoint-url http://${LOCALSTACK_HOST}:4566 --name "${TOPIC_NAME_TO_CREATE}" --region ${AWS_REGION} --attributes "FifoTopic=true,ContentBasedDeduplication=true" --query "TopicArn" --output text)
+  SNS_TOPIC_ARN=$(awslocal sns create-topic --endpoint-url http://${LOCALSTACK_HOST}:4566 --name "${TOPIC_NAME_TO_CREATE}" --region ${AWS_REGION} --attributes "FifoTopic=false,ContentBasedDeduplication=true" --query "TopicArn" --output text)
   echo "SNS Topic ARN: ${SNS_TOPIC_ARN}"
 }
 

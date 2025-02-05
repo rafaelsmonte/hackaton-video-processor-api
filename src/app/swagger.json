@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "https://your-production-url.com",
+      "url": "https://8fon9li2aa.execute-api.us-east-1.amazonaws.com",
       "description": "Production server"
     },
     {
@@ -16,9 +16,20 @@
     }
   ],
   "paths": {
-    "/video": {
+    "/videos": {
       "get": {
         "summary": "Retrieve all videos",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID for authentication."
+          }
+        ],
         "responses": {
           "200": {
             "description": "List of videos",
@@ -45,7 +56,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "User ID associated with the video upload."
+            "description": "User ID for authentication."
           }
         ],
         "requestBody": {
@@ -58,20 +69,21 @@
                   "video": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Video file to upload."
+                    "description": "The video file to upload."
                   },
                   "description": {
                     "type": "string",
                     "description": "Description of the video."
                   }
-                }
+                },
+                "required": ["video"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Video uploaded successfully",
+            "description": "Video uploaded successfully.",
             "content": {
               "application/json": {
                 "schema": {
@@ -81,15 +93,24 @@
             }
           },
           "400": {
-            "description": "Bad request (missing file or user ID)"
+            "description": "Invalid request (missing file or user ID)."
           }
         }
       }
     },
-    "/video/{id}": {
+    "/videos/{id}": {
       "get": {
-        "summary": "Retrieve a specific video by ID",
+        "summary": "Retrieve video by ID",
         "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID for authentication."
+          },
           {
             "name": "id",
             "in": "path",
@@ -112,7 +133,7 @@
             }
           },
           "404": {
-            "description": "Video not found"
+            "description": "Video not found."
           }
         }
       }
