@@ -1,7 +1,8 @@
 export interface IMessagingGateway {
   publishVideoImageExtractionRequestMessage(
     videoId: string,
-    videoUrl: string,
+    videoName: string,
+    userId: string,
   ): Promise<void>;
 
   publishVideoImageExtractionSuccessMessage(

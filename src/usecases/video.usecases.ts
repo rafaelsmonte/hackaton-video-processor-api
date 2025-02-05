@@ -33,10 +33,11 @@ export class VideoUseCases {
     description: string,
   ): Promise<Video> {
     const bucketName = process.env.AWS_S3_BUCKET;
-    const key = `videos/${Date.now()}-${fileName}`;
+    const videoName = `${Date.now()}-${fileName}`;
+
     const videoUrl = await externalStorageGateway.uploadVideo(
       bucketName,
-      key,
+      `${userId}/${videoName}`,
       fileBuffer,
       fileMimetype,
     );
@@ -45,6 +46,7 @@ export class VideoUseCases {
       Video.new(
         userId,
         description,
+        // add name field
         videoUrl,
         VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_REQUESTED,
       ),
@@ -52,7 +54,8 @@ export class VideoUseCases {
 
     messagingGateway.publishVideoImageExtractionRequestMessage(
       newVideo.getId(),
-      videoUrl,
+      videoName,
+      userId,
     );
 
     return newVideo;

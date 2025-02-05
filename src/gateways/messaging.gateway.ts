@@ -10,7 +10,8 @@ export class MessagingGateway implements IMessagingGateway {
 
   async publishVideoImageExtractionRequestMessage(
     videoId: string,
-    videoUrl: string,
+    videoName: string,
+    userId: string,
   ): Promise<void> {
     const message: VideoMessage = {
       type: MessageType.MSG_EXTRACT_SNAPSHOT,
@@ -18,7 +19,8 @@ export class MessagingGateway implements IMessagingGateway {
       target: MessageTarget.VIDEO_IMAGE_PROCESSOR_SERVICE,
       payload: {
         videoId,
-        videoUrl,
+        videoName,
+        userId,
       },
     };
 
