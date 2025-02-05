@@ -5,20 +5,23 @@ on:
     branches: [ "main" ]
 
 jobs:
-  #sonar:
-  #  name: Sonar
-  #  continue-on-error: true #remover
-  #  runs-on: ubuntu-latest
-  #  steps:
-  #    - uses: actions/checkout@v3
-  #      with:
-  #        fetch-depth: 0 
-  #    - uses: sonarsource/sonarqube-scan-action@master
-  #      env:
-  #        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  #        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+  sonar:
+   name: Sonar
+   runs-on: ubuntu-latest
+   steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0  
+    - uses: sonarsource/sonarqube-scan-action@master
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+    - uses: sonarsource/sonarqube-quality-gate-action@master
+      timeout-minutes: 5
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   build-and-push:
-    #needs: sonar
+    needs: sonar
     name: Build Image
     runs-on: ubuntu-latest
     steps:
