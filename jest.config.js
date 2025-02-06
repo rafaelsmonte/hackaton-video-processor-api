@@ -1,9 +1,8 @@
-
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   moduleNameMapper: {
-    "^src/(.*)$": "<rootDir>/src/$1",
+    '^src/(.*)$': '<rootDir>/src/$1',
   },
   // coverageThreshold: {
   //   global: {
@@ -13,19 +12,18 @@ module.exports = {
   //   }
   // },
   collectCoverage: true,
+  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
   coveragePathIgnorePatterns: [
-    "/node_modules/",
-    "/.*\\.spec\\.js$/",
-    "/.*\\.spec\\.js$/",
+    '/node_modules/',
+    '/dist/',
+    '/.*\\.spec\\.js$/',
+    '/.*\\.spec\\.js$/',
     '\\.error\\.ts$',
     '\\index\\.ts$',
     '/.*\\swagger\\.ts$',
     '<rootDir>/src/app/*',
   ],
-  coverageDirectory: "coverage",
-  coverageReporters: ["lcov", "text"],
-  collectCoverageFrom: [
-    'src/**/*.{ts,tsx}', 
-    '!src/**/*.d.ts', 
-  ],
+  coverageDirectory: 'coverage',
+  coverageReporters: ['lcov', 'text'],
+  collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.d.ts'],
 };
