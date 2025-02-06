@@ -53,7 +53,7 @@ export class VideoApp {
         if (receivedMessages.Messages) {
           for (const rawMessage of receivedMessages.Messages) {
             try {
-              console.log(`Message received: ${rawMessage}`);
+              console.log(`Message body received: ${rawMessage.Body}`);
 
               const message = JSON.parse(rawMessage.Body) as VideoMessage;
 
