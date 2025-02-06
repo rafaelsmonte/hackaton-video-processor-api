@@ -9,6 +9,7 @@ describe('Video', () => {
         new Date(),
         new Date(),
         'userId-1',
+        'video name',
         'video description',
         'video url',
         'video snapshots url',
@@ -17,6 +18,7 @@ describe('Video', () => {
 
       expect(video.getId()).toBe('videoId-1');
       expect(video.getUserId()).toBe('userId-1');
+      expect(video.getName()).toBe('video name');
       expect(video.getDescription()).toBe('video description');
       expect(video.getUrl()).toBe('video url');
       expect(video.getSnapshotsUrl()).toBe('video snapshots url');
@@ -29,14 +31,16 @@ describe('Video', () => {
   describe('new', () => {
     it('should create a new video with default values except userId, description, url and status', () => {
       const userId = 'userId-1';
+      const name = 'video name';
       const description = 'video description';
       const url = 'video url';
       const status = VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PENDING;
 
-      const video = Video.new(userId, description, url, status);
+      const video = Video.new(userId, name, description, url, status);
 
       expect(video.getId()).toBe('');
       expect(video.getUserId()).toBe('userId-1');
+      expect(video.getName()).toBe('video name');
       expect(video.getDescription()).toBe('video description');
       expect(video.getUrl()).toBe('video url');
       expect(video.getSnapshotsUrl()).toBe('');
@@ -53,6 +57,7 @@ describe('Video', () => {
         new Date(),
         new Date(),
         'userId-1',
+        'video name',
         'video description',
         'video url',
         'video snapshots url',
@@ -64,6 +69,9 @@ describe('Video', () => {
 
       video.setUserId('userId-1');
       expect(video.getUserId()).toBe('userId-1');
+
+      video.setName('video name');
+      expect(video.getName()).toBe('video name');
 
       video.setDescription('video description');
       expect(video.getDescription()).toBe('video description');

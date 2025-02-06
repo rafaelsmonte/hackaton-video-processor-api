@@ -31,7 +31,7 @@ create_sns_topic() {
   echo "SNS Topic ARN: ${SNS_TOPIC_ARN}"
 }
 
-create_sns_topic "video-api-topic.fifo"
+create_sns_topic "video-api-topic"
 
 echo "Configuring DynamoDB"
 echo "==================="

@@ -17,7 +17,7 @@ describe('S3Storage', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env.AWS_REGION = 'us-east-1';
+    process.env.AWS_S3_REGION = 'us-east-1';
 
     sendMock = jest.fn();
     (S3Client as jest.Mock).mockImplementation(() => ({

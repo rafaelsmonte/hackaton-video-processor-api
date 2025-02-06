@@ -45,8 +45,8 @@ export class VideoUseCases {
     const newVideo = await videoGateway.create(
       Video.new(
         userId,
+        videoName,
         description,
-        // add name field
         videoUrl,
         VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_REQUESTED,
       ),

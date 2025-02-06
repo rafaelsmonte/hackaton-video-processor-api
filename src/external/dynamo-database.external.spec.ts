@@ -29,6 +29,7 @@ describe('DynamoDatabase', () => {
             createdAt: '2025-01-01T00:00:00Z',
             updatedAt: '2025-01-01T01:00:00Z',
             userId: 'userId-1',
+            name: 'video name',
             description: 'video description',
             url: 'video url',
             snapshotsUrl: 'video snapshots url',
@@ -58,6 +59,7 @@ describe('DynamoDatabase', () => {
           createdAt: '2025-01-01T00:00:00Z',
           updatedAt: '2025-01-01T01:00:00Z',
           userId: 'userId-1',
+          name: 'video name',
           description: 'video description',
           url: 'video url',
           snapshotsUrl: 'video snapshots url',
@@ -92,6 +94,7 @@ describe('DynamoDatabase', () => {
     it('should create a new video and return it', async () => {
       const video = {
         getUserId: () => 'userId-1',
+        getName: () => 'video name',
         getDescription: () => 'video description',
         getUrl: () => 'video url',
         getSnapshotsUrl: () => 'video snapshots Url',
@@ -107,6 +110,7 @@ describe('DynamoDatabase', () => {
           createdAt: '2025-01-01T00:00:00Z',
           updatedAt: '2025-01-01T01:00:00Z',
           userId: 'userId-1',
+          name: 'video name',
           description: 'video description',
           url: 'video url',
           snapshotsUrl: 'video snapshots url',
@@ -114,14 +118,11 @@ describe('DynamoDatabase', () => {
         },
       });
 
-      //When I create an Video
       const createdVideo = await database.createVideo(video as any);
 
-      //Then the result should be not null
       expect(createdVideo).not.toBeNull();
-      //And the result's ID should be 'new-videoId'
       expect(createdVideo.getId()).toBe('new-videoId');
-      //And the result's Description should be 'video description'
+      expect(createdVideo.getName()).toBe('video name');
       expect(createdVideo.getDescription()).toBe('video description');
     });
 
@@ -130,6 +131,7 @@ describe('DynamoDatabase', () => {
 
       const video = {
         getUserId: () => 'userId-1',
+        getName: () => 'video name',
         getDescription: () => 'video description',
         getUrl: () => 'video url',
         getSnapshotsUrl: () => 'video snapshots Url',
@@ -153,6 +155,7 @@ describe('DynamoDatabase', () => {
           createdAt: '2025-01-01T00:00:00Z',
           updatedAt: '2025-01-01T01:00:00Z',
           userId: 'userId-1',
+          name: 'video name',
           description: 'video description',
           url: 'video url',
           snapshotsUrl: 'video snapshots url',
@@ -199,6 +202,7 @@ describe('DynamoDatabase', () => {
           createdAt: '2025-01-01T00:00:00Z',
           updatedAt: '2025-01-01T01:00:00Z',
           userId: 'userId-1',
+          name: 'video name',
           description: 'video description',
           url: 'video url',
           snapshotsUrl: 'video snapshots url',

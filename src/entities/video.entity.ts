@@ -5,6 +5,7 @@ export class Video {
   private createdAt: Date;
   private updatedAt: Date;
   private userId: string;
+  private name: string;
   private description: string;
   private url: string;
   private snapshotsUrl: string;
@@ -15,6 +16,7 @@ export class Video {
     createdAt: Date,
     updateAt: Date,
     userId: string,
+    name: string,
     description: string,
     url: string,
     snapshotsUrl: string,
@@ -24,6 +26,7 @@ export class Video {
     this.setCreatedAt(createdAt);
     this.setUpdatedAt(updateAt);
     this.setUserId(userId);
+    this.setName(name);
     this.setDescription(description);
     this.setUrl(url);
     this.setSnapshotsUrl(snapshotsUrl);
@@ -32,12 +35,13 @@ export class Video {
 
   static new(
     userId: string,
+    name: string,
     description: string,
     url: string,
     status: VideoImageExtractionStatus,
   ): Video {
     const now = new Date();
-    return new Video('', now, now, userId, description, url, '', status);
+    return new Video('', now, now, userId, name, description, url, '', status);
   }
 
   // getters
@@ -55,6 +59,10 @@ export class Video {
 
   public getUserId(): string {
     return this.userId;
+  }
+
+  public getName(): string {
+    return this.name;
   }
 
   public getStatus(): string {
@@ -88,6 +96,10 @@ export class Video {
 
   public setUserId(userId: string): void {
     this.userId = userId;
+  }
+
+  public setName(name: string): void {
+    this.name = name;
   }
 
   public setStatus(status: string): void {

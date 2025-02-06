@@ -9,6 +9,7 @@ describe('VideoAdapter', () => {
   const mockVideo = (): Video => {
     return Video.new(
       'userId-1',
+      'video name',
       'video description',
       'video url',
       VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PENDING,
@@ -26,6 +27,7 @@ describe('VideoAdapter', () => {
           createdAt: new Date(),
           updatedAt: new Date(),
           userId: 'userId-1',
+          name: 'video name',
           description: 'video description',
           url: 'video url',
           snapshotsUrl: '',
@@ -51,6 +53,7 @@ describe('VideoAdapter', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         userId: 'userId-1',
+        name: 'video name',
         description: 'video description',
         url: 'video url',
         snapshotsUrl: '',
