@@ -6,11 +6,10 @@ export class ExternalStorageGateway implements IExternalStorageGateway {
   constructor(private externalStorage: IExternalStorage) {}
 
   public async uploadVideo(
-    bucketName: string,
     key: string,
     body: Buffer | string | Readable,
     contentType: string,
   ): Promise<string> {
-    return this.externalStorage.uploadVideo(bucketName, key, body, contentType);
+    return this.externalStorage.uploadVideo(key, body, contentType);
   }
 }

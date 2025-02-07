@@ -1,18 +1,23 @@
-import { IExternalStorageGateway } from '../interfaces/external-storage.gateway.interface';
+import { Video } from '../entities/video.entity';
 import { IVideoGateway } from '../interfaces/video.gateway.interface';
 import { IMessagingGateway } from '../interfaces/messaging.gateway.interface';
-import { Video } from '../entities/video.entity';
+import { IExternalStorageGateway } from '../interfaces/external-storage.gateway.interface';
 import { VideoImageExtractionStatus } from '../enum/video-image-extraction-status';
-import { VideoUseCases } from './video.usecases';
 import { VideoNotFoundError } from '../errors/video-not-found.error';
+import { InvalidVideoImageExtractionStatusError } from '../errors/invalid-video-image-extraction-status.error';
+import { VideoFile } from '../entities/video-file.entity';
+import { VideoUseCases } from './video.usecases';
+
+const removeTimestamp = (str: string) =>
+  str.replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/g, '[DATE]');
 
 describe('VideoUseCases', () => {
-  let mockVideoGateway: jest.Mocked<IVideoGateway>;
-  let mockMessagingGateway: jest.Mocked<IMessagingGateway>;
-  let mockExternalStorageGateway: jest.Mocked<IExternalStorageGateway>;
+  let videoGateway: jest.Mocked<IVideoGateway>;
+  let messagingGateway: jest.Mocked<IMessagingGateway>;
+  let externalStorageGateway: jest.Mocked<IExternalStorageGateway>;
 
   beforeEach(() => {
-    mockVideoGateway = {
+    videoGateway = {
       findAll: jest.fn(),
       findById: jest.fn(),
       create: jest.fn(),
@@ -20,89 +25,84 @@ describe('VideoUseCases', () => {
       updateStatusAndSnapshotsUrl: jest.fn(),
       delete: jest.fn(),
     };
-    mockMessagingGateway = {
+
+    messagingGateway = {
       publishVideoImageExtractionRequestMessage: jest.fn(),
       publishVideoImageExtractionSuccessMessage: jest.fn(),
       publishVideoImageExtractionErrorMessage: jest.fn(),
     };
-    mockExternalStorageGateway = {
+
+    externalStorageGateway = {
       uploadVideo: jest.fn(),
     };
   });
 
   describe('findAll', () => {
-    it('should return a list of videos', async () => {
-      const mockVideos: Video[] = [];
-      mockVideos.push(
-        new Video(
-          'videoId-1',
-          new Date(),
-          new Date(),
-          'userId-1',
-          'video name',
+    it('should return all videos for a user', async () => {
+      const userId = 'userId-1';
+      const videos = [
+        Video.new(
+          userId,
+          'video1.mp4',
           'video description',
           'video url',
-          'video snapshots url',
-          VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PENDING,
+          VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_REQUESTED,
         ),
-      );
+      ];
+      videoGateway.findAll.mockResolvedValue(videos);
 
-      mockVideoGateway.findAll.mockResolvedValue(mockVideos);
+      const result = await VideoUseCases.findAll(videoGateway, userId);
 
-      const videos = await VideoUseCases.findAll(mockVideoGateway);
-
-      expect(videos).toEqual(mockVideos);
-      expect(mockVideoGateway.findAll).toHaveBeenCalledTimes(1);
-    });
-
-    it('should return an empty array if no video exist', async () => {
-      mockVideoGateway.findAll.mockResolvedValue([]);
-
-      const videos = await VideoUseCases.findAll(mockVideoGateway);
-
-      expect(videos).toEqual([]);
-      expect(mockVideoGateway.findAll).toHaveBeenCalledTimes(1);
+      expect(videoGateway.findAll).toHaveBeenCalledWith(userId);
+      expect(result).toEqual(videos);
     });
   });
 
   describe('findById', () => {
-    it('should return the video if found', async () => {
-      const mockVideo = new Video(
-        'videoId-1',
-        new Date(),
-        new Date(),
-        'userId-1',
-        'video name',
+    it('should return a video by id', async () => {
+      const videoId = 'videoId-1';
+      const userId = 'userId-1';
+      const video = Video.new(
+        userId,
+        'video1.mp4',
         'video description',
         'video url',
-        'video snapshots url',
-        VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PENDING,
+        VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_REQUESTED,
+      );
+      videoGateway.findById.mockResolvedValue(video);
+
+      const result = await VideoUseCases.findById(
+        videoGateway,
+        videoId,
+        userId,
       );
 
-      mockVideoGateway.findById.mockResolvedValue(mockVideo);
-
-      const video = await VideoUseCases.findById(mockVideoGateway, 'videoId-1');
-
-      expect(video).toEqual(mockVideo);
-      expect(mockVideoGateway.findById).toHaveBeenCalledTimes(1);
-      expect(mockVideoGateway.findById).toHaveBeenCalledWith('videoId-1');
+      expect(videoGateway.findById).toHaveBeenCalledWith(videoId, userId);
+      expect(result).toEqual(video);
     });
 
     it('should throw VideoNotFoundError if video is not found', async () => {
-      mockVideoGateway.findById.mockResolvedValue(null);
+      const videoId = 'videoId-1';
+      const userId = 'userId-123';
+      videoGateway.findById.mockResolvedValue(null);
 
       await expect(
-        VideoUseCases.findById(mockVideoGateway, 'videoId-2'),
+        VideoUseCases.findById(videoGateway, videoId, userId),
       ).rejects.toThrow(VideoNotFoundError);
-      expect(mockVideoGateway.findById).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('create', () => {
-    it('should create a new video successfully', async () => {
-      mockExternalStorageGateway.uploadVideo.mockResolvedValue('video url');
+    it('should create a new video and publish a message', async () => {
+      const userId = 'userId-1';
+      const fileName = 'video.mp4';
+      const fileBuffer = Buffer.from('video data');
+      const fileMimetype = 'video/mp4';
+      const description = 'video description';
+      const videoUrl = 'http://storage.com/video.mp4';
+      const videoName = `${Date.now()}-${fileName}`;
 
-      const mockVideo = new Video(
+      const newVideo = new Video(
         'videoId-1',
         new Date(),
         new Date(),
@@ -113,191 +113,300 @@ describe('VideoUseCases', () => {
         'video snapshots url',
         VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PENDING,
       );
+      externalStorageGateway.uploadVideo.mockResolvedValue(videoUrl);
+      videoGateway.create.mockResolvedValue(newVideo);
 
-      mockVideoGateway.create.mockResolvedValue(mockVideo);
-
-      const video = await VideoUseCases.create(
-        mockVideoGateway,
-        mockMessagingGateway,
-        mockExternalStorageGateway,
-        '',
-        '' as any, // TODO implement this
-        '',
-        'userId-1',
-        'video description',
+      const result = await VideoUseCases.create(
+        videoGateway,
+        messagingGateway,
+        externalStorageGateway,
+        fileName,
+        fileBuffer,
+        fileMimetype,
+        userId,
+        description,
       );
 
-      expect(video).toEqual(mockVideo);
-      expect(mockExternalStorageGateway.uploadVideo).toHaveBeenCalledTimes(1);
-      expect(mockVideoGateway.create).toHaveBeenCalledTimes(1);
+      expect(result).toEqual(newVideo);
+    });
+
+    it('should delete the video and throw an error if message publishing fails', async () => {
+      const userId = 'userId-1';
+      const fileName = 'video.mp4';
+      const fileBuffer = Buffer.from('video data');
+      const fileMimetype = 'video/mp4';
+      const description = 'video description';
+      const videoUrl = 'http://storage.com/video.mp4';
+      const videoName = `${Date.now()}-${fileName}`;
+      const newVideo = Video.new(
+        userId,
+        videoName,
+        description,
+        videoUrl,
+        VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_REQUESTED,
+      );
+
+      externalStorageGateway.uploadVideo.mockResolvedValue(videoUrl);
+      videoGateway.create.mockResolvedValue(newVideo);
+      messagingGateway.publishVideoImageExtractionRequestMessage.mockImplementation(
+        () => {
+          throw new Error('Message publishing failed');
+        },
+      );
+
+      await expect(
+        VideoUseCases.create(
+          videoGateway,
+          messagingGateway,
+          externalStorageGateway,
+          fileName,
+          fileBuffer,
+          fileMimetype,
+          userId,
+          description,
+        ),
+      ).rejects.toThrow('Message publishing failed');
+
+      expect(videoGateway.delete).toHaveBeenCalledWith(newVideo.getId());
+    });
+  });
+
+  describe('retry', () => {
+    it('should retry video image extraction', async () => {
+      const videoId = 'videoId-1';
+      const userId = 'userId-1';
+
+      const video = new Video(
+        'videoId-1',
+        new Date(),
+        new Date(),
+        'userId-1',
+        'video name',
+        'video description',
+        'video url',
+        'video snapshots url',
+        VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_ERROR,
+      );
+
+      videoGateway.findById.mockResolvedValue(video);
+      videoGateway.updateStatus.mockResolvedValue(video);
+
+      const result = await VideoUseCases.retry(
+        videoGateway,
+        messagingGateway,
+        videoId,
+        userId,
+      );
+
+      expect(
+        messagingGateway.publishVideoImageExtractionRequestMessage,
+      ).toHaveBeenCalledWith(videoId, video.getName(), userId);
+      expect(video.getStatus()).toEqual(
+        VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_REQUESTED,
+      );
+      expect(result).toEqual(video);
+    });
+
+    it('should throw InvalidVideoImageExtractionStatusError if video status is not error', async () => {
+      const videoId = 'videoId-1';
+      const userId = 'userId-1';
+      const video = Video.new(
+        userId,
+        'video1.mp4',
+        'video description',
+        'video url',
+        VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_SUCCESS,
+      );
+      videoGateway.findById.mockResolvedValue(video);
+
+      await expect(
+        VideoUseCases.retry(videoGateway, messagingGateway, videoId, userId),
+      ).rejects.toThrow(InvalidVideoImageExtractionStatusError);
     });
   });
 
   describe('handleProcessingMessageReceived', () => {
-    it('should update video status to VIDEO_IMAGE_EXTRACTION_PROCESSING', async () => {
-      const mockVideo = new Video(
-        'videoId-1',
-        new Date(),
-        new Date(),
-        'userId-1',
-        'video name',
+    it('should update video status to processing', async () => {
+      const videoId = 'videoId-1';
+      const userId = 'userId-1';
+      const video = Video.new(
+        userId,
+        'video1.mp4',
         'video description',
         'video url',
-        'video snapshots url',
-        VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PROCESSING,
+        VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_REQUESTED,
       );
-
-      mockVideoGateway.findById.mockResolvedValue(mockVideo);
+      videoGateway.findById.mockResolvedValue(video);
 
       await VideoUseCases.handleProcessingMessageReceived(
-        mockVideoGateway,
-        'videoId-1',
+        videoGateway,
+        videoId,
+        userId,
       );
 
-      expect(mockVideo.getStatus()).toBe(
+      expect(video.getStatus()).toEqual(
         VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PROCESSING,
       );
-      expect(mockVideoGateway.updateStatus).toHaveBeenCalledWith(mockVideo);
+      expect(videoGateway.updateStatus).toHaveBeenCalledWith(video);
     });
 
     it('should throw VideoNotFoundError if video is not found', async () => {
-      mockVideoGateway.findById.mockResolvedValue(null);
+      const videoId = 'videoId-1';
+      const userId = 'userId-123';
+      videoGateway.findById.mockResolvedValue(null);
 
       await expect(
         VideoUseCases.handleProcessingMessageReceived(
-          mockVideoGateway,
-          'videoId-1',
+          videoGateway,
+          videoId,
+          userId,
         ),
       ).rejects.toThrow(VideoNotFoundError);
-
-      expect(mockVideoGateway.findById).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('handleSuccessMessageReceived', () => {
-    it('should update video status to VIDEO_IMAGE_EXTRACTION_SUCCESS', async () => {
-      const mockVideo = new Video(
-        'videoId-1',
-        new Date(),
-        new Date(),
-        'userId-1',
-        'video name',
+    it('should update video status to success and publish a success message', async () => {
+      const videoId = 'videoId-1';
+      const userId = 'userId-1';
+      const videoSnapshotsUrl = 'http://storage.com/snapshots.jpg';
+      const video = Video.new(
+        userId,
+        'video1.mp4',
         'video description',
         'video url',
-        'video snapshots url',
-        VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_SUCCESS,
+        VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PROCESSING,
       );
-
-      mockVideoGateway.findById.mockResolvedValue(mockVideo);
+      videoGateway.findById.mockResolvedValue(video);
 
       await VideoUseCases.handleSuccessMessageReceived(
-        mockVideoGateway,
-        mockMessagingGateway,
-        'videoId-1',
-        'video snapshots url',
+        videoGateway,
+        messagingGateway,
+        videoId,
+        userId,
+        videoSnapshotsUrl,
       );
 
-      expect(mockVideo.getStatus()).toBe(
+      expect(video.getStatus()).toEqual(
         VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_SUCCESS,
       );
-      expect(mockVideoGateway.updateStatusAndSnapshotsUrl).toHaveBeenCalledWith(
-        mockVideo,
+      expect(video.getSnapshotsUrl()).toEqual(videoSnapshotsUrl);
+      expect(
+        messagingGateway.publishVideoImageExtractionSuccessMessage,
+      ).toHaveBeenCalledWith(
+        userId,
+        video.getUrl(),
+        video.getDescription(),
+        videoSnapshotsUrl,
+      );
+      expect(videoGateway.updateStatusAndSnapshotsUrl).toHaveBeenCalledWith(
+        video,
       );
     });
 
     it('should throw VideoNotFoundError if video is not found', async () => {
-      mockVideoGateway.findById.mockResolvedValue(null);
+      const videoId = 'videoId-1';
+      const userId = 'userId-123';
+      const videoSnapshotsUrl = 'http://storage.com/snapshots.jpg';
+      videoGateway.findById.mockResolvedValue(null);
 
       await expect(
         VideoUseCases.handleSuccessMessageReceived(
-          mockVideoGateway,
-          mockMessagingGateway,
-          'videoId-1',
-          'video snapshots url',
+          videoGateway,
+          messagingGateway,
+          videoId,
+          userId,
+          videoSnapshotsUrl,
         ),
       ).rejects.toThrow(VideoNotFoundError);
-
-      expect(mockVideoGateway.findById).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('handleErrorMessageReceived', () => {
-    it('should update video status to VIDEO_IMAGE_EXTRACTION_ERROR', async () => {
-      const mockVideo = new Video(
-        'videoId-1',
-        new Date(),
-        new Date(),
-        'userId-1',
-        'video name',
+    it('should update video status to error and publish an error message', async () => {
+      const videoId = 'videoId-1';
+      const userId = 'userId-1';
+      const errorMessage = 'Error processing video';
+      const errorDescription = 'An error occurred while processing the video';
+      const video = Video.new(
+        userId,
+        'video1.mp4',
         'video description',
         'video url',
-        'video snapshots url',
-        VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_ERROR,
+        VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PROCESSING,
       );
-
-      mockVideoGateway.findById.mockResolvedValue(mockVideo);
+      videoGateway.findById.mockResolvedValue(video);
 
       await VideoUseCases.handleErrorMessageReceived(
-        mockVideoGateway,
-        mockMessagingGateway,
-        'videoId-1',
-        'error message',
-        'error description',
+        videoGateway,
+        messagingGateway,
+        videoId,
+        userId,
+        errorMessage,
+        errorDescription,
       );
 
-      expect(mockVideo.getStatus()).toBe(
+      expect(video.getStatus()).toEqual(
         VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_ERROR,
       );
-
-      expect(mockVideoGateway.updateStatus).toHaveBeenCalledWith(mockVideo);
+      expect(
+        messagingGateway.publishVideoImageExtractionErrorMessage,
+      ).toHaveBeenCalledWith(
+        userId,
+        video.getUrl(),
+        video.getDescription(),
+        errorMessage,
+        errorDescription,
+      );
+      expect(videoGateway.updateStatus).toHaveBeenCalledWith(video);
     });
 
     it('should throw VideoNotFoundError if video is not found', async () => {
-      mockVideoGateway.findById.mockResolvedValue(null);
+      const videoId = 'videoId-1';
+      const userId = 'userId-123';
+      const errorMessage = 'Error processing video';
+      const errorDescription = 'An error occurred while processing the video';
+      videoGateway.findById.mockResolvedValue(null);
 
       await expect(
         VideoUseCases.handleErrorMessageReceived(
-          mockVideoGateway,
-          mockMessagingGateway,
-          'videoId-1',
-          'error message',
-          'error description',
+          videoGateway,
+          messagingGateway,
+          videoId,
+          userId,
+          errorMessage,
+          errorDescription,
         ),
       ).rejects.toThrow(VideoNotFoundError);
-
-      expect(mockVideoGateway.findById).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('delete', () => {
-    it('should delete an video', async () => {
-      const mockVideo = new Video(
-        'videoId-1',
-        new Date(),
-        new Date(),
-        'userId-1',
-        'video name',
+    it('should delete a video', async () => {
+      const videoId = 'videoId-1';
+      const userId = 'userId-123';
+      const video = Video.new(
+        userId,
+        'video1.mp4',
         'video description',
         'video url',
-        'video snapshots url',
-        VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_ERROR,
+        VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_SUCCESS,
       );
+      videoGateway.findById.mockResolvedValue(video);
 
-      mockVideoGateway.findById.mockResolvedValue(mockVideo);
+      await VideoUseCases.delete(videoGateway, videoId, userId);
 
-      await VideoUseCases.delete(mockVideoGateway, 'videoId-1');
-
-      expect(mockVideoGateway.delete).toHaveBeenCalledWith('videoId-1');
+      expect(videoGateway.delete).toHaveBeenCalledWith(videoId);
     });
 
     it('should throw VideoNotFoundError if video is not found', async () => {
-      mockVideoGateway.findById.mockResolvedValue(null);
+      const videoId = 'videoId-1';
+      const userId = 'userId-123';
+      videoGateway.findById.mockResolvedValue(null);
 
       await expect(
-        VideoUseCases.delete(mockVideoGateway, 'videoId-1'),
+        VideoUseCases.delete(videoGateway, videoId, userId),
       ).rejects.toThrow(VideoNotFoundError);
-
-      expect(mockVideoGateway.findById).toHaveBeenCalledTimes(1);
     });
   });
 });

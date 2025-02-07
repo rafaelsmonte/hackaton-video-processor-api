@@ -4,6 +4,7 @@ import {
   DynamoDBDocumentClient,
   GetCommand,
   PutCommand,
+  QueryCommand,
   ScanCommand,
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
@@ -40,10 +41,14 @@ export class DynamoDatabase implements IDatabase {
     this.dynamoDBDocClient = DynamoDBDocumentClient.from(dynamoClient);
   }
 
-  async findAllVideos(): Promise<Video[]> {
+  async findAllVideos(userId: string): Promise<Video[]> {
     try {
       const params = {
         TableName: 'videos',
+        FilterExpression: 'userId = :userId',
+        ExpressionAttributeValues: {
+          ':userId': userId,
+        },
       };
 
       const result = await this.dynamoDBDocClient.send(new ScanCommand(params));
@@ -70,17 +75,25 @@ export class DynamoDatabase implements IDatabase {
     }
   }
 
-  async findVideoById(id: string): Promise<Video | null> {
+  async findVideoById(id: string, userId: string): Promise<Video | null> {
     try {
       const params = {
         TableName: 'videos',
-        Key: { id },
+        KeyConditionExpression: 'id = :id',
+        FilterExpression: 'userId = :userId',
+        ExpressionAttributeValues: {
+          ':id': id,
+          ':userId': userId,
+        },
       };
 
-      const result = await this.dynamoDBDocClient.send(new GetCommand(params));
-      const video = result.Item;
+      const result = await this.dynamoDBDocClient.send(
+        new QueryCommand(params),
+      );
 
-      if (!video) return null;
+      if (result.Items?.length === 0) return null;
+
+      const video = result.Items[0];
 
       return new Video(
         video.id,
@@ -121,7 +134,7 @@ export class DynamoDatabase implements IDatabase {
 
       await this.dynamoDBDocClient.send(new PutCommand(params));
 
-      return this.findVideoById(videoId);
+      return this.findVideoById(videoId, video.getUserId());
     } catch (error) {
       console.log('Failed to create a video due to: ', error);
       throw new DatabaseError('Failed to create a video');
@@ -148,7 +161,7 @@ export class DynamoDatabase implements IDatabase {
 
       await this.dynamoDBDocClient.send(new UpdateCommand(params));
 
-      return this.findVideoById(video.getId());
+      return this.findVideoById(video.getId(), video.getUserId());
     } catch (error) {
       console.log('Failed to update video status due to: ', error);
       throw new DatabaseError('Failed to update video status');
@@ -179,7 +192,7 @@ export class DynamoDatabase implements IDatabase {
 
       await this.dynamoDBDocClient.send(new UpdateCommand(params));
 
-      return this.findVideoById(video.getId());
+      return this.findVideoById(video.getId(), video.getUserId());
     } catch (error) {
       console.log(
         'Failed to update video status and snapshots url due to: ',

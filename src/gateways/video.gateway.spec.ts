@@ -49,7 +49,7 @@ describe('VideoGateway', () => {
 
     databaseMock.findAllVideos.mockResolvedValue(mockVideos);
 
-    const result = await videoGateway.findAll();
+    const result = await videoGateway.findAll('userId-1');
 
     expect(result).toEqual(mockVideos);
     expect(databaseMock.findAllVideos).toHaveBeenCalledTimes(1);
@@ -70,20 +70,26 @@ describe('VideoGateway', () => {
 
     databaseMock.findVideoById.mockResolvedValue(mockVideo);
 
-    const result = await videoGateway.findById('videoId-1');
+    const result = await videoGateway.findById('videoId-1', 'userId-1');
 
     expect(result).toEqual(mockVideo);
-    expect(databaseMock.findVideoById).toHaveBeenCalledWith('videoId-1');
+    expect(databaseMock.findVideoById).toHaveBeenCalledWith(
+      'videoId-1',
+      'userId-1',
+    );
     expect(databaseMock.findVideoById).toHaveBeenCalledTimes(1);
   });
 
   it('should return null if video is not found by id', async () => {
     databaseMock.findVideoById.mockResolvedValue(null);
 
-    const result = await videoGateway.findById('');
+    const result = await videoGateway.findById('videoId-1', 'userId-999');
 
     expect(result).toBeNull();
-    expect(databaseMock.findVideoById).toHaveBeenCalledWith('');
+    expect(databaseMock.findVideoById).toHaveBeenCalledWith(
+      'videoId-1',
+      'userId-999',
+    );
     expect(databaseMock.findVideoById).toHaveBeenCalledTimes(1);
   });
 

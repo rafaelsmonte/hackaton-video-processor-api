@@ -18,6 +18,7 @@ describe('S3Storage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     process.env.AWS_S3_REGION = 'us-east-1';
+    process.env.AWS_S3_BUCKET = 'test-bucket';
 
     sendMock = jest.fn();
     (S3Client as jest.Mock).mockImplementation(() => ({
@@ -67,12 +68,7 @@ describe('S3Storage', () => {
 
       sendMock.mockResolvedValue({});
 
-      const result = await externalStorage.uploadVideo(
-        bucketName,
-        key,
-        body,
-        contentType,
-      );
+      const result = await externalStorage.uploadVideo(key, body, contentType);
       expect(sendMock).toHaveBeenCalledWith(expect.any(PutObjectCommand));
       expect(result).toBe(`http://localstack:4566/${bucketName}/${key}`);
     });
@@ -83,12 +79,7 @@ describe('S3Storage', () => {
 
       sendMock.mockResolvedValue({});
 
-      const result = await externalStorage.uploadVideo(
-        bucketName,
-        key,
-        body,
-        contentType,
-      );
+      const result = await externalStorage.uploadVideo(key, body, contentType);
       expect(sendMock).toHaveBeenCalledWith(expect.any(PutObjectCommand));
       expect(result).toBe(
         `https://${bucketName}.s3.us-east-1.amazonaws.com/${key}`,

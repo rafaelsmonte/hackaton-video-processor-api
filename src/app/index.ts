@@ -13,6 +13,8 @@ import { MessageSender } from '../enum/message-sender.enum';
 import { MessageTarget } from '../enum/message-target.enum';
 import { MessageType } from '../enum/message-type.enum';
 import { validateUserId } from './validateUserId.middleware';
+import { InvalidVideoFileError } from '../errors/invalid-video-file.error';
+import { VideoNotFoundError } from '../errors/video-not-found.error';
 
 export class VideoApp {
   constructor(
@@ -66,6 +68,7 @@ export class VideoApp {
                     this.database,
                     this.messaging,
                     message.payload['videoId'],
+                    message.payload['userId'],
                     message.payload['videoSnapshotsUrl'],
                   );
                 } else if (
@@ -75,6 +78,7 @@ export class VideoApp {
                     this.database,
                     this.messaging,
                     message.payload['videoId'],
+                    message.payload['userId'],
                     message.payload['errorMessage'],
                     message.payload['errorDescription'],
                   );
@@ -84,6 +88,7 @@ export class VideoApp {
                   await VideoController.handleProcessingMessageReceived(
                     this.database,
                     message.payload['videoId'],
+                    message.payload['userId'],
                   );
                 } else {
                   console.error(`Unknown message type ${message.type}`);
@@ -117,7 +122,12 @@ export class VideoApp {
 
   startApi() {
     const express = require('express');
-    const upload = multer({ storage: multer.memoryStorage() });
+    const upload = multer({
+      storage: multer.memoryStorage(),
+      limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB file size limit
+      },
+    });
     const bodyParser = require('body-parser');
     const swaggerUi = require('swagger-ui-express');
 
@@ -146,7 +156,9 @@ export class VideoApp {
       '/videos',
       validateUserId,
       async (request: Request, response: Response) => {
-        await VideoController.findAll(this.database)
+        const userId = (request as any).userId;
+
+        await VideoController.findAll(this.database, userId)
           .then((videos) => {
             response
               .setHeader('Content-type', 'application/json')
@@ -162,7 +174,9 @@ export class VideoApp {
       validateUserId,
       async (request: Request, response: Response) => {
         const id = String(request.params.id);
-        await VideoController.findById(this.database, id)
+        const userId = (request as any).userId;
+
+        await VideoController.findById(this.database, id, userId)
           .then((video) => {
             response
               .setHeader('Content-type', 'application/json')
@@ -178,14 +192,6 @@ export class VideoApp {
       validateUserId,
       upload.single('video'),
       async (request: Request, response: Response) => {
-        const file = request.file;
-
-        if (!file) {
-          return response
-            .status(400)
-            .json({ error: 'No video file provided in the request' });
-        }
-
         const { description } = request.body;
         const userId = (request as any).userId;
 
@@ -193,12 +199,30 @@ export class VideoApp {
           this.database,
           this.messaging,
           this.externalStorage,
-          file.originalname,
-          file.buffer,
-          file.mimetype,
+          request.file?.originalname,
+          request.file?.buffer,
+          request.file?.mimetype,
           userId,
           description,
         )
+          .then((video) => {
+            response
+              .setHeader('Content-type', 'application/json')
+              .status(200)
+              .send(video);
+          })
+          .catch((error) => this.handleError(error, response));
+      },
+    );
+
+    app.post(
+      '/videos/:id/retry',
+      validateUserId,
+      async (request: Request, response: Response) => {
+        const id = String(request.params.id);
+        const userId = (request as any).userId;
+
+        await VideoController.retry(this.database, this.messaging, id, userId)
           .then((video) => {
             response
               .setHeader('Content-type', 'application/json')
@@ -217,6 +241,10 @@ export class VideoApp {
   handleError(error: Error, response: Response): void {
     if (error instanceof InvalidVideoImageExtractionStatusError) {
       response.status(400).json({ message: error.message });
+    } else if (error instanceof InvalidVideoFileError) {
+      response.status(400).json({ message: error.message });
+    } else if (error instanceof VideoNotFoundError) {
+      response.status(404).json({ message: error.message });
     } else if (error instanceof DatabaseError) {
       response.status(500).json({ message: error.message });
     } else {

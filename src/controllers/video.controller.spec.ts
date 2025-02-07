@@ -19,11 +19,13 @@ describe('VideoController', () => {
   let database: IDatabase;
   let messaging: IMessaging;
   let externalStorage: IExternalStorage;
+  let userId: string;
 
   beforeEach(() => {
     database = {} as IDatabase;
     messaging = {} as IMessaging;
     externalStorage = {} as IExternalStorage;
+    userId = 'userId-1';
 
     (VideoUseCases.findAll as jest.Mock).mockResolvedValue([]);
     (VideoUseCases.findById as jest.Mock).mockResolvedValue(null);
@@ -49,7 +51,7 @@ describe('VideoController', () => {
           id: 'videoId-1',
           createdAt: '2025-01-01T00:00:00Z',
           updatedAt: '2025-01-01T01:00:00Z',
-          userId: 'userId-1',
+          userId,
           description: 'video description',
           url: 'video url',
           snapshotsUrl: 'video snapshots url',
@@ -61,10 +63,13 @@ describe('VideoController', () => {
         JSON.stringify(mockVideos),
       );
 
-      const result = await VideoController.findAll(database);
+      const result = await VideoController.findAll(database, userId);
 
       expect(result).toBe(JSON.stringify(mockVideos));
-      expect(VideoUseCases.findAll).toHaveBeenCalledTimes(1);
+      expect(VideoUseCases.findAll).toHaveBeenCalledWith(
+        expect.any(VideoGateway),
+        userId,
+      );
     });
   });
 
@@ -74,7 +79,7 @@ describe('VideoController', () => {
         id: 'videoId-1',
         createdAt: '2025-01-01T00:00:00Z',
         updatedAt: '2025-01-01T01:00:00Z',
-        userId: 'userId-1',
+        userId,
         description: 'video description',
         url: 'video url',
         snapshotsUrl: 'video snapshots url',
@@ -85,12 +90,17 @@ describe('VideoController', () => {
         JSON.stringify(mockVideo),
       );
 
-      const result = await VideoController.findById(database, 'videoId-1');
+      const result = await VideoController.findById(
+        database,
+        'videoId-1',
+        userId,
+      );
 
       expect(result).toBe(JSON.stringify(mockVideo));
       expect(VideoUseCases.findById).toHaveBeenCalledWith(
         expect.any(VideoGateway),
         'videoId-1',
+        userId,
       );
     });
   });
@@ -110,9 +120,9 @@ describe('VideoController', () => {
         messaging,
         externalStorage,
         '',
-        '' as any, // TODO fix this
+        '' as any,
         '',
-        'userId-1',
+        userId,
         'video description',
       );
 
@@ -122,21 +132,46 @@ describe('VideoController', () => {
         expect.any(MessagingGateway),
         expect.any(ExternalStorageGateway),
         '',
-        '' as any, // TODO fix this
+        '' as any,
         '',
-        'userId-1',
+        userId,
         'video description',
       );
     });
   });
 
   describe('delete', () => {
-    it('should delete an video', async () => {
-      await VideoController.delete(database, 'videoId-1');
+    it('should delete a video', async () => {
+      await VideoController.delete(database, 'videoId-1', userId);
 
       expect(VideoUseCases.delete).toHaveBeenCalledWith(
         expect.any(VideoGateway),
         'videoId-1',
+        userId,
+      );
+    });
+  });
+
+  describe('retry', () => {
+    it('should retry video processing', async () => {
+      const mockVideo = { id: 'videoId-1' };
+      (VideoAdapter.adaptJson as jest.Mock).mockReturnValue(
+        JSON.stringify(mockVideo),
+      );
+
+      const result = await VideoController.retry(
+        database,
+        messaging,
+        'videoId-1',
+        'userId-1',
+      );
+
+      expect(result).toBe(JSON.stringify(mockVideo));
+      expect(VideoUseCases.retry).toHaveBeenCalledWith(
+        expect.any(VideoGateway),
+        expect.any(MessagingGateway),
+        'videoId-1',
+        'userId-1',
       );
     });
   });
@@ -146,11 +181,12 @@ describe('VideoController', () => {
       await VideoController.handleProcessingMessageReceived(
         database,
         'videoId-1',
+        'userId-1',
       );
 
       expect(
         VideoUseCases.handleProcessingMessageReceived,
-      ).toHaveBeenCalledWith(expect.any(VideoGateway), 'videoId-1');
+      ).toHaveBeenCalledWith(expect.any(VideoGateway), 'videoId-1', 'userId-1');
     });
   });
 
@@ -160,6 +196,7 @@ describe('VideoController', () => {
         database,
         messaging,
         'videoId-1',
+        'userId-1',
         'video snapshots url',
       );
 
@@ -167,6 +204,7 @@ describe('VideoController', () => {
         expect.any(VideoGateway),
         expect.any(MessagingGateway),
         'videoId-1',
+        'userId-1',
         'video snapshots url',
       );
     });
@@ -178,6 +216,7 @@ describe('VideoController', () => {
         database,
         messaging,
         'videoId-1',
+        'userId-1',
         'error message',
         'error description',
       );
@@ -186,6 +225,7 @@ describe('VideoController', () => {
         expect.any(VideoGateway),
         expect.any(MessagingGateway),
         'videoId-1',
+        'userId-1',
         'error message',
         'error description',
       );

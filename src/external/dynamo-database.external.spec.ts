@@ -6,6 +6,7 @@ import {
   PutCommand,
   ScanCommand,
   UpdateCommand,
+  QueryCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { DynamoDatabase } from './dynamo-database.external';
 import { DatabaseError } from '../errors/database.error';
@@ -18,6 +19,28 @@ describe('DynamoDatabase', () => {
   beforeEach(() => {
     dynamoMock.reset();
     database = new DynamoDatabase();
+  });
+
+  describe('constructor', () => {
+    it('should configure DynamoDBClient for DEVELOPMENT environment', () => {
+      process.env.ENVIRONMENT = 'DEVELOPMENT';
+      process.env.AWS_REGION = 'us-east-1';
+      process.env.AWS_ACCESS_KEY_ID = 'test-access-key-id';
+      process.env.AWS_SECRET_ACCESS_KEY = 'test-secret-access-key';
+
+      const db = new DynamoDatabase();
+      expect(db).toBeDefined();
+    });
+
+    it('should configure DynamoDBClient for non-DEVELOPMENT environment', () => {
+      process.env.ENVIRONMENT = 'PRODUCTION';
+      process.env.AWS_REGION = 'us-east-1';
+      process.env.AWS_ACCESS_KEY_ID = 'test-access-key-id';
+      process.env.AWS_SECRET_ACCESS_KEY = 'test-secret-access-key';
+
+      const db = new DynamoDatabase();
+      expect(db).toBeDefined();
+    });
   });
 
   describe('findAllVideos', () => {
@@ -38,7 +61,7 @@ describe('DynamoDatabase', () => {
         ],
       });
 
-      const videos = await database.findAllVideos();
+      const videos = await database.findAllVideos('userId-1');
 
       expect(videos).toHaveLength(1);
       expect(videos[0].getId()).toBe('videoId-1');
@@ -47,46 +70,50 @@ describe('DynamoDatabase', () => {
     it('should throw a DatabaseError on failure', async () => {
       dynamoMock.on(ScanCommand).rejects(new Error('DynamoDB error'));
 
-      await expect(database.findAllVideos()).rejects.toThrow(DatabaseError);
+      await expect(database.findAllVideos('userId-1')).rejects.toThrow(
+        DatabaseError,
+      );
     });
   });
 
   describe('findVideoById', () => {
     it('should return the video by ID', async () => {
-      dynamoMock.on(GetCommand).resolves({
-        Item: {
-          id: 'videoId-1',
-          createdAt: '2025-01-01T00:00:00Z',
-          updatedAt: '2025-01-01T01:00:00Z',
-          userId: 'userId-1',
-          name: 'video name',
-          description: 'video description',
-          url: 'video url',
-          snapshotsUrl: 'video snapshots url',
-          status: VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PENDING,
-        },
+      dynamoMock.on(QueryCommand).resolves({
+        Items: [
+          {
+            id: 'videoId-1',
+            createdAt: '2025-01-01T00:00:00Z',
+            updatedAt: '2025-01-01T01:00:00Z',
+            userId: 'userId-1',
+            name: 'video name',
+            description: 'video description',
+            url: 'video url',
+            snapshotsUrl: 'video snapshots url',
+            status: VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PENDING,
+          },
+        ],
       });
 
-      const video = await database.findVideoById('videoId-1');
+      const video = await database.findVideoById('videoId-1', 'userId-1');
 
       expect(video).not.toBeNull();
       expect(video?.getId()).toBe('videoId-1');
     });
 
     it('should return null if the video is not found', async () => {
-      dynamoMock.on(GetCommand).resolves({});
+      dynamoMock.on(QueryCommand).resolves({ Items: [] });
 
-      const order = await database.findVideoById('order2');
+      const video = await database.findVideoById('videoId-1', 'userId-999');
 
-      expect(order).toBeNull();
+      expect(video).toBeNull();
     });
 
     it('should throw a DatabaseError on failure', async () => {
-      dynamoMock.on(GetCommand).rejects(new Error('DynamoDB error'));
+      dynamoMock.on(QueryCommand).rejects(new Error('DynamoDB error'));
 
-      await expect(database.findVideoById('videoId-1')).rejects.toThrow(
-        DatabaseError,
-      );
+      await expect(
+        database.findVideoById('videoId-1', 'userId-1'),
+      ).rejects.toThrow(DatabaseError);
     });
   });
 
@@ -104,18 +131,20 @@ describe('DynamoDatabase', () => {
 
       dynamoMock.on(PutCommand).resolves({});
 
-      dynamoMock.on(GetCommand).resolves({
-        Item: {
-          id: 'new-videoId',
-          createdAt: '2025-01-01T00:00:00Z',
-          updatedAt: '2025-01-01T01:00:00Z',
-          userId: 'userId-1',
-          name: 'video name',
-          description: 'video description',
-          url: 'video url',
-          snapshotsUrl: 'video snapshots url',
-          status: VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PENDING,
-        },
+      dynamoMock.on(QueryCommand).resolves({
+        Items: [
+          {
+            id: 'new-videoId',
+            createdAt: '2025-01-01T00:00:00Z',
+            updatedAt: '2025-01-01T01:00:00Z',
+            userId: 'userId-1',
+            name: 'video name',
+            description: 'video description',
+            url: 'video url',
+            snapshotsUrl: 'video snapshots url',
+            status: VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PENDING,
+          },
+        ],
       });
 
       const createdVideo = await database.createVideo(video as any);
@@ -149,22 +178,25 @@ describe('DynamoDatabase', () => {
     it('should update the video status and return the updated video', async () => {
       dynamoMock.on(UpdateCommand).resolves({});
 
-      dynamoMock.on(GetCommand).resolves({
-        Item: {
-          id: 'videoId-1',
-          createdAt: '2025-01-01T00:00:00Z',
-          updatedAt: '2025-01-01T01:00:00Z',
-          userId: 'userId-1',
-          name: 'video name',
-          description: 'video description',
-          url: 'video url',
-          snapshotsUrl: 'video snapshots url',
-          status: VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PENDING,
-        },
+      dynamoMock.on(QueryCommand).resolves({
+        Items: [
+          {
+            id: 'videoId-1',
+            createdAt: '2025-01-01T00:00:00Z',
+            updatedAt: '2025-01-01T01:00:00Z',
+            userId: 'userId-1',
+            name: 'video name',
+            description: 'video description',
+            url: 'video url',
+            snapshotsUrl: 'video snapshots url',
+            status: VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PENDING,
+          },
+        ],
       });
 
       const video = {
         getId: () => 'videoId-1',
+        getUserId: () => 'userId-1',
         getStatus: () =>
           VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PENDING,
       };
@@ -196,22 +228,25 @@ describe('DynamoDatabase', () => {
     it('should update the video status, snapshots url and return the updated video', async () => {
       dynamoMock.on(UpdateCommand).resolves({});
 
-      dynamoMock.on(GetCommand).resolves({
-        Item: {
-          id: 'videoId-1',
-          createdAt: '2025-01-01T00:00:00Z',
-          updatedAt: '2025-01-01T01:00:00Z',
-          userId: 'userId-1',
-          name: 'video name',
-          description: 'video description',
-          url: 'video url',
-          snapshotsUrl: 'video snapshots url',
-          status: VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PENDING,
-        },
+      dynamoMock.on(QueryCommand).resolves({
+        Items: [
+          {
+            id: 'videoId-1',
+            createdAt: '2025-01-01T00:00:00Z',
+            updatedAt: '2025-01-01T01:00:00Z',
+            userId: 'userId-1',
+            name: 'video name',
+            description: 'video description',
+            url: 'video url',
+            snapshotsUrl: 'video snapshots url',
+            status: VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PENDING,
+          },
+        ],
       });
 
       const video = {
         getId: () => 'videoId-1',
+        getUserId: () => 'userId-1',
         getStatus: () =>
           VideoImageExtractionStatus.VIDEO_IMAGE_EXTRACTION_PENDING,
         getSnapshotsUrl: () => 'video snapshots url',

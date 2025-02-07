@@ -20,11 +20,12 @@ export class S3Storage implements IExternalStorage {
   }
 
   async uploadVideo(
-    bucketName: string,
     key: string,
     body: Buffer | string | Readable,
     contentType: string,
   ): Promise<string> {
+    const bucketName = process.env.AWS_S3_BUCKET;
+
     try {
       const command = new PutObjectCommand({
         Bucket: bucketName,

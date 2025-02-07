@@ -5,12 +5,12 @@ import { IVideoGateway } from '../interfaces/video.gateway.interface';
 export class VideoGateway implements IVideoGateway {
   constructor(private database: IDatabase) {}
 
-  async findAll(): Promise<Video[]> {
-    return this.database.findAllVideos();
+  async findAll(userId: string): Promise<Video[]> {
+    return this.database.findAllVideos(userId);
   }
 
-  async findById(id: string): Promise<Video | null> {
-    return this.database.findVideoById(id);
+  async findById(id: string, userId: string): Promise<Video | null> {
+    return this.database.findVideoById(id, userId);
   }
 
   async create(video: Video): Promise<Video> {

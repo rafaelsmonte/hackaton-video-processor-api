@@ -15,15 +15,9 @@ describe('ExternalStorageGateway', () => {
   });
 
   it('should call uploadVideo to send the video to the external storage', async () => {
-    await externalStorageGateway.uploadVideo(
-      'bucket name',
-      'key',
-      'body',
-      'content type',
-    );
+    await externalStorageGateway.uploadVideo('key', 'body', 'content type');
 
     expect(externalStorageMock.uploadVideo).toHaveBeenCalledWith(
-      'bucket name',
       'key',
       'body',
       'content type',
