@@ -1,19 +1,19 @@
 ## Hackathon 7SOAT Video Processor API Service - FIAP
 
-// TODO
-
-This project implements a set of APIs to support the business rules for an automated food ordering system in a diner.
+This project implements a set of APIs designed to support the business logic of a video image extraction system.
 
 The project architecture utilizes the Express framework with a clean architecture.
 
 This documentation is organized as follows:
 
-- **Event Storming:** Includes a link to the event storming documentation.
+- **Service:** Documentation of core business rules and their flows, describing how it integrates with the other system services;
+- **API:** Describes all service's endpoints, including their requests and responses;
 - **Development:** Provides guidelines for developers to set up the development environment and run the project locally.
 
 ### Documentation
 
-- [Event Storming (Miro)](https://miro.com/app/board/uXjVKUxNpFs=/?share_link_id=512382361305)
+- [Video Processor API Service](docs/service.md)
+- [API](docs/api.md)
 - [Development](docs/development.md)
 
 ### Authors

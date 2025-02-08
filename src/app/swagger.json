@@ -7,12 +7,12 @@
   },
   "servers": [
     {
-      "url": "https://8fon9li2aa.execute-api.us-east-1.amazonaws.com",
-      "description": "Production server"
-    },
-    {
       "url": "http://localhost:3000",
       "description": "Local server"
+    },
+    {
+      "url": "https://8fon9li2aa.execute-api.us-east-1.amazonaws.com",
+      "description": "Production server"
     }
   ],
   "paths": {
@@ -124,6 +124,46 @@
         "responses": {
           "200": {
             "description": "Video details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Video"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Video not found."
+          }
+        }
+      }
+    },
+    "/videos/{id}/retry": {
+      "post": {
+        "summary": "Retry video processing",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID for authentication."
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the video to retry processing."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Video processing retried successfully.",
             "content": {
               "application/json": {
                 "schema": {
