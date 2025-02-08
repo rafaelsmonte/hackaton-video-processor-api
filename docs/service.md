@@ -1,6 +1,6 @@
 # Hackathon Video Processor API Service
 
-**Version:** 1.0 **Release Date:** 08th February 2025 **Last Revision:** 07th February 2025
+**Version:** 1.0 **Release Date:** 07th February 2025 **Last Revision:** 08th February 2025
 
 ---
 

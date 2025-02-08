@@ -6,9 +6,9 @@ The project architecture utilizes the Express framework with a clean architectur
 
 This documentation is organized as follows:
 
-- **Service:** Documentation of core business rules and their flows, describing how it integrates with the other system services;
-- **API:** Describes all service's endpoints, including their requests and responses;
-- **Development:** Provides guidelines for developers to set up the development environment and run the project locally.
+- **Service**: Outlines the core business rules and workflows, detailing how the service integrates with other system components.
+- **API**: Describes all endpoints, including request formats and response structures.
+- **Development**: Provides step-by-step instructions for setting up the development environment and running the project locally.
 
 ### Documentation
 
