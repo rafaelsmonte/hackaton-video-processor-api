@@ -22,8 +22,6 @@ This documentation is organized as follows:
 - _Thiago Thalison Firmino de Lima (RM354998)_
 - _Vitor Manoel da Silveira (RM355029)_
 
-## License
-
-Nest is [MIT licensed](LICENSE).
+### Coverage
 
 [![Coverage Status](https://coveralls.io/repos/github/rafaelsmonte/tech-challenge-7soat-payment-service/badge.svg)](https://coveralls.io/github/rafaelsmonte/tech-challenge-7soat-payment-service)
