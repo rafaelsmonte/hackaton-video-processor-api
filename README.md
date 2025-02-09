@@ -14,6 +14,7 @@ This documentation is organized as follows:
 
 - [Video Processor API Service](docs/service.md)
 - [API](docs/api.md)
+- [Technical Debts and Future Improvements ](docs/technical_debts_and_future_improvements.md)
 - [Development](docs/development.md)
 
 ### Authors
