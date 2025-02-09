@@ -26,3 +26,9 @@ This documentation is organized as follows:
 ### Coverage
 
 [![Coverage Status](https://coveralls.io/repos/github/rafaelsmonte/tech-challenge-7soat-payment-service/badge.svg)](https://coveralls.io/github/rafaelsmonte/tech-challenge-7soat-payment-service)
+
+## Evidences
+
+![Coverage](docs/evidences/video-processor-coverage.png)
+![Sucessful pipeline on push](docs/evidences/video-processor-pipeline.png)
+![Sucessful pipeline on pr](docs/evidences/video-processor-pipeline-pr.png)

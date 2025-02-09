@@ -6,7 +6,7 @@ on:
 
 jobs:
   sonar:
-    name: SonarQube Analysis
+    name: SonarQube Analysis test
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -23,7 +23,12 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Run tests with coverage
-        run: yarn test:cov 
+        run: yarn test:cov
+        
+      - name: Upload coverage to Coveralls
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
+        run: npx coveralls < coverage/lcov.info
 
       - name: Upload coverage to SonarQube
         uses: sonarsource/sonarqube-scan-action@master
@@ -34,7 +39,7 @@ jobs:
           args: >
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
   build-and-push:
-    #needs: sonar
+    needs: sonar
     name: Build Image
     runs-on: ubuntu-latest
     steps:
