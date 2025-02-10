@@ -15,6 +15,7 @@ This documentation is organized as follows:
 - [Service](docs/service.md)
 - [API](docs/api.md)
 - [Development](docs/development.md)
+- [CI/CD](docs/ci-cd.md)
 
 ### Authors
 
