@@ -231,7 +231,7 @@ Currently, messages are sent directly to **Amazon SNS** when specific events occ
 
 To mitigate this risk, the current approach involves a "manual" rollback mechanism. When a new video is created, the system first stores the video record in the database and then attempts to publish a message to SNS. If the message fails to send, the system deletes the video record and returns an error to the client. This ensures that no "orphaned" records remain, preventing inconsistencies between the database and the messaging system.
 
-While this approach guarantees data integrity, it does not ensure eventual message delivery. To improve this, implementing the **Outbox Pattern** would introduce a persistent message storage mechanism\*\*. Instead of sending messages to SNS immediately, events would first be stored in a dedicated database table. A background process would then reliably read and publish these messages to SNS, ensuring that no messages are lost due to temporary failures. This approach enhances fault tolerance, improves message consistency, and allows retry mechanisms for failed message deliveries.
+While this approach guarantees data integrity, it does not ensure eventual message delivery. To improve this, implementing the **Outbox Pattern** would introduce a persistent message storage mechanism. Instead of sending messages to SNS immediately, events would first be stored in a dedicated database table. A background process would then reliably read and publish these messages to SNS, ensuring that no messages are lost due to temporary failures. This approach enhances fault tolerance, improves message consistency, and allows retry mechanisms for failed message deliveries.
 
 ### **2. Protecting S3 URLs and Implementing Secure File Delivery**
 
