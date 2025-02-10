@@ -1,10 +1,23 @@
 # Hackathon Video Processor API Service
 
-**Version:** 1.0 **Release Date:** 07th February 2025 **Last Revision:** 08th February 2025
+This service receives videos from clients, validates and stores them in an external storage service (**AWS S3**), and communicates with a video processing service via **AWS SNS and SQS** to extract snapshots. This documentation provides a detailed overview of the API’s workflows, validations, and messaging strategies, along with key technical considerations for future improvements.
 
 ---
 
-## Service Flows
+## **File Size Validation Strategy**
+
+To handle video file uploads, we use **Multer**, a middleware for handling multipart/form-data in Node.js. One of its features is file size validation, which we configure to reject videos larger than 5 MB before they are fully processed by our application.
+
+From a **clean architecture perspective**, this approach introduces a slight violation because file size is an entity-level concern—it should ideally be validated within the domain layer, not at the infrastructure (API) level. However, enforcing this restriction at the API layer is a practical necessity due to performance and security concerns.
+
+If we were to validate the file size only at the entity level, the API would first fully receive and load the video into memory before performing the check. This would expose the system to potential risks, such as:
+
+- **Excessive memory consumption**: A large video (e.g., 1 GB) could overwhelm the server before validation occurs;
+- **Denial of Service (DoS) risks**: Attackers could exploit this by sending oversized files, causing the application to crash.
+
+By performing the size check early, at the API level, we prevent unnecessary resource consumption and protect the system while still ensuring a proper validation mechanism. This trade-off prioritizes system stability and security over strict adherence to architectural purity.
+
+---
 
 ### Upload video
 
@@ -103,7 +116,7 @@ If a video image extraction has failed, the system allows retrying the extractio
 
 ---
 
-#### Video Processor Worker Extraction Response
+## Video Processor Worker Extraction Response
 
 ```mermaid
 sequenceDiagram
@@ -205,3 +218,25 @@ When the system receives an error message indicating that the video image extrac
 
 7. Persists the new status in the database.
    - This ensures that future queries return the error status.
+
+---
+
+## **Technical Debts and Future Improvements**
+
+As the API service evolves, there are two key areas for improvement that will enhance reliability and security:
+
+### **1. Ensuring Message Delivery with the Outbox Pattern**
+
+Currently, messages are sent directly to **Amazon SNS** when specific events occur in the system. However, there is no built-in mechanism to guarantee that these messages are successfully published. If a failure occurs during message transmission, there is a risk of **losing critical event notifications**.
+
+To mitigate this risk, the current approach involves a "manual" rollback mechanism. When a new video is created, the system first stores the video record in the database and then attempts to publish a message to SNS. If the message fails to send, the system deletes the video record and returns an error to the client. This ensures that no "orphaned" records remain, preventing inconsistencies between the database and the messaging system.
+
+While this approach guarantees data integrity, it does not ensure eventual message delivery. To improve this, implementing the **Outbox Pattern** would introduce a persistent message storage mechanism\*\*. Instead of sending messages to SNS immediately, events would first be stored in a dedicated database table. A background process would then reliably read and publish these messages to SNS, ensuring that no messages are lost due to temporary failures. This approach enhances fault tolerance, improves message consistency, and allows retry mechanisms for failed message deliveries.
+
+### **2. Protecting S3 URLs and Implementing Secure File Delivery**
+
+The API currently returns direct S3 URLs to clients when listing videos. While this approach simplifies access, it also exposes raw storage links, making it possible for unauthorized users to share or access videos directly without authentication.
+
+A more secure approach would be to hide S3 URLs from the client and introduce a new API endpoint for secure video retrieval. Instead of exposing the S3 link, the API would fetch the video file from S3 and stream it directly to the user. This would allow better access control, as requests could be authenticated and authorized before serving the video. Additionally, signed URLs with expiration could be an alternative for controlled, temporary access.
+
+These improvements will strengthen the resilience and security of the API, ensuring **reliable event messaging** and **better control over video access** while maintaining a seamless user experience.
